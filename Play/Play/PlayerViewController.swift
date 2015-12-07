@@ -113,9 +113,14 @@ class PlayerViewController: UIViewController {
         asyncLoadTrackImage(track)
         titleLabel.text = track.title
         artistLabel.text = track.artist
+        let path = NSBundle.mainBundle().pathForResource("Info", ofType: "plist")
+        let clientID = NSDictionary(contentsOfFile: path!)?.valueForKey("client_id") as! String
+        let url = NSURL(string: "https://api.soundcloud.com/tracks/\(track.id)/stream?client_id=\(clientID)")!
+        player = AVPlayer(URL: url)
     }
     
-    /* 
+    
+    /*
      *  This Method should play or pause the song, depending on the song's state
      *  It should also toggle between the play and pause images by toggling
      *  sender.selected
@@ -125,29 +130,22 @@ class PlayerViewController: UIViewController {
      *  property accordingly.
      */
     func playOrPauseTrack(sender: UIButton) {
-        let path = NSBundle.mainBundle().pathForResource("Info", ofType: "plist")
-        let clientID = NSDictionary(contentsOfFile: path!)?.valueForKey("client_id") as! String
-        let track = tracks[currentIndex]
-        let url = NSURL(string: "https://api.soundcloud.com/tracks/\(track.id)/stream?client_id=\(clientID)")!
         // FILL ME IN
         if player.currentItem == nil {
-            let item = AVPlayerItem(URL: url)
-            player.replaceCurrentItemWithPlayerItem(item)
             loadTrackElements()
         }
         
-        if player.rate == 0 {
-            if player.currentItem!.status == .ReadyToPlay {
-                player.play()
-                if sender == playPauseButton {
-                    sender.selected = true
-                }
-            }
+        if let _=player.error {
+            print("ERROR")
+        }
+        
+        
+        if player.rate == 0.0 {
+            player.play()
+            sender.selected = true
         } else {
             player.pause()
-            if sender == playPauseButton {
-                sender.selected = false
-            }
+            sender.selected = false
         }
     
     }
@@ -163,8 +161,14 @@ class PlayerViewController: UIViewController {
             return
         }
         currentIndex = currentIndex + 1
+        var playing = true
+        if player.rate == 0.0 {
+            playing = false
+        }
         loadTrackElements()
-        playOrPauseTrack(sender)
+        if playing {
+            player.play()
+        }
     }
 
     /*
@@ -178,16 +182,22 @@ class PlayerViewController: UIViewController {
      */
 
     func previousTrackTapped(sender: UIButton) {
-        if player.currentTime().value == 0 {
-            playOrPauseTrack(sender)
+        if player.currentTime().value != 0 {
+            loadTrackElements()
             return
         }
         if currentIndex == 0 {
             return
         }
+        var playing = true
+        if player.rate == 0.0 {
+            playing = false
+        }
         currentIndex = currentIndex - 1
         loadTrackElements()
-        playOrPauseTrack(sender)
+        if playing {
+            player.play()
+        }
     }
     
     
